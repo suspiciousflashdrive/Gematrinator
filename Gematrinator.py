@@ -1,6 +1,7 @@
 from tkinter import *
 import tkinter as tk
 
+# Dictionaries (same as yours)
 ordinal = {"A":"1","B":"2","C":"3","D":"4","E":"5","F":"6","G":"7","H":"8","I":"9","J":"10","K":"11","L":"12","M":"13","N":"14","O":"15","P":"16","Q":"17","R":"18","S":"19","T":"20","U":"21","V":"22","W":"23","X":"24","Y":"25","Z":"26",
 "a":"1","b":"2","c":"3","d":"4","e":"5","f":"6","g":"7","h":"8","i":"9","j":"10","k":"11","l":"12","m":"13","n":"14","o":"15","p":"16","q":"17","r":"18","s":"19","t":"20","u":"21","v":"22","w":"23","x":"24","y":"25","z":"26",
 "Α":"1","Β":"2","Γ":"3","Δ":"4","Ε":"5","Ζ":"6","Η":"7","Θ":"8","Ι":"9","Κ":"10","Λ":"11","Μ":"12","Ν":"13","Ξ":"14","Ο":"15","Π":"16","Ρ":"17","Σ":"18","Τ":"19","Υ":"20","Φ":"21","Χ":"22","Ψ":"23","Ω":"24",
@@ -21,128 +22,179 @@ revReduction = {"A":"8","B":"7","C":"6","D":"5","E":"4","F":"3","G":"2","H":"1",
 "Α":"6","Β":"5","Γ":"4","Δ":"3","Ε":"2","Ζ":"1","Η":"9","Θ":"8","Ι":"7","Κ":"6","Λ":"5","Μ":"4","Ν":"3","Ξ":"2","Ο":"1","Π":"9","Ρ":"8","Σ":"7","Τ":"6","Υ":"5","Φ":"4","Χ":"3","Ψ":"2","Ω":"1",
 "α":"6","β":"5","γ":"4","δ":"3","ε":"2","ζ":"1","η":"9","θ":"8","ι":"7","κ":"6","λ":"5","μ":"4","ν":"3","ξ":"2","ο":"1","π":"9","ρ":"8","σ":"7","ς":"7","τ":"6","υ":"5","φ":"4","χ":"3","ψ":"2","ω":"1"}
 
-
+# Tkinter setup
 root = tk.Tk()
 root.geometry("1280x720")
 root.title("Gematrinator")
 
 var = tk.StringVar()
 
-# Entry
 entry = tk.Entry(root, textvariable=var, font=("Courier", 20), justify='center', width=50)
 root.grid_columnconfigure(0, weight=1)
-entry.grid(pady="44",row=3, column=0, sticky='n')
+entry.grid(pady="44", row=3, column=0, sticky='n')
 
-# Frame to display letters and numbers
 display_frame = tk.Frame(root)
 display_frame.grid(sticky='N')
 
-# Totals label
 totals_label = tk.Label(root, text="", font=("Courier", 16))
 totals_label.grid(sticky='S')
 
+# -------------------- FIXED on_change --------------------
 def on_change(*args):
-    # Clear previous labels
     for widget in display_frame.winfo_children():
         widget.destroy()
 
     total_ordinal = total_reduction = total_revOrdinal = total_revReduction = 0
-
     col_index = 0
 
-    text = var.get()
-    for char in text:
-        if char.isalpha() or char.isdigit():
-            if char.isdigit():
-                val_ord = val_red = val_revOrd = val_revRed = int(char)
-            elif char in ordinal:
-                val_ord = int(ordinal[char])
-                val_red = int(reduction[char])
-                val_revOrd = int(revOrdinal[char])
-                val_revRed = int(revReduction[char])
-            else:
-                continue  # skip unknown characters
+    text = var.get().strip()
+    chunks = text.split()  # space-separated chunks
 
-            total_ordinal += val_ord
-            total_reduction += val_red
-            total_revOrdinal += val_revOrd
-            total_revReduction += val_revRed
+    for chunk in chunks:
+        if chunk.isdigit():  # full number as one value
+            num = int(chunk)
+            val_ord = val_red = val_revOrd = val_revRed = num
 
-            # Letter on top
-            tk.Label(display_frame, text=char, font=("Courier", 20)).grid(row=0, column=col_index, padx=5)
-            # Ordinal below
-            tk.Label(display_frame, text=str(val_ord), font=("Courier", 20)).grid(row=1, column=col_index, padx=5)
-
+            tk.Label(display_frame, text=chunk, font=("Courier", 20)).grid(row=0, column=col_index, padx=5)
+            tk.Label(display_frame, text=str(num), font=("Courier", 20)).grid(row=1, column=col_index, padx=5)
             col_index += 1
+
+        else:
+            val_ord = val_red = val_revOrd = val_revRed = 0
+            for char in chunk:
+                if char.isalpha() and char in ordinal:
+                    val_ord += int(ordinal[char])
+                    val_red += int(reduction[char])
+                    val_revOrd += int(revOrdinal[char])
+                    val_revRed += int(revReduction[char])
+                elif char.isdigit():  # Option 1: treat digit same in all ciphers
+                    val_ord += int(char)
+                    val_red += int(char)
+                    val_revOrd += int(char)
+                    val_revRed += int(char)
+
+                tk.Label(display_frame, text=char, font=("Courier", 20)).grid(row=0, column=col_index, padx=5)
+                tk.Label(display_frame, text=str(val_ord), font=("Courier", 20)).grid(row=1, column=col_index, padx=5)
+                col_index += 1
+
+        total_ordinal += val_ord
+        total_reduction += val_red
+        total_revOrdinal += val_revOrd
+        total_revReduction += val_revRed
+        col_index += 1
 
     totals_label.config(
         text=f"Ordinal: {total_ordinal}    Reduction: {total_reduction}    "
-             f"Reverse Ordinal: {total_revOrdinal}    Reverse Reduction: {total_revReduction}",fg="blue", font=("Courier", 16, "bold")
+             f"Reverse Ordinal: {total_revOrdinal}    Reverse Reduction: {total_revReduction}",
+        fg="blue", font=("Courier", 16, "bold")
     )
 
-display = tk.Frame(root)
-display.grid()
+# -------------------- FIXED on_enter --------------------
+def on_enter(event):
+    global header_created, next_row
 
+    word = var.get().strip()
+    if not word:
+        return
+
+    if not header_created:
+        create_header()
+        header_created = True
+
+    chunks = word.split()  # space-separated chunks
+    total_ord = total_red = total_revOrd = total_revRed = 0
+
+    for chunk in chunks:
+        if chunk.isdigit():  # full number
+            num = int(chunk)
+            total_ord += num
+            total_red += num
+            total_revOrd += num
+            total_revRed += num
+        else:
+            for char in chunk:
+                if char.isalpha() and char in ordinal:
+                    total_ord += int(ordinal[char])
+                    total_red += int(reduction[char])
+                    total_revOrd += int(revOrdinal[char])
+                    total_revRed += int(revReduction[char])
+                elif char.isdigit():  # Option 1: digit same in all ciphers
+                    total_ord += int(char)
+                    total_red += int(char)
+                    total_revOrd += int(char)
+                    total_revRed += int(char)
+
+    tk.Label(rows_frame, text=word, font=("Courier", 14)).grid(row=next_row, column=0, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_ord), font=("Courier", 14)).grid(row=next_row, column=1, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_red), font=("Courier", 14)).grid(row=next_row, column=2, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_revOrd), font=("Courier", 14)).grid(row=next_row, column=3, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_revRed), font=("Courier", 14)).grid(row=next_row, column=4, padx=8, pady=2)
+
+    next_row += 1
+    var.set("")
+    entry.focus_set()
+
+# -------------------- Enter handler --------------------
 rows_frame = tk.Frame(root)
 rows_frame.grid()
-
-def create_header():
-    tk.Label(rows_frame, text="| Word |", font=("Courier", 16, "bold")).grid(row=0, column=0, padx=8, pady=40)
-    tk.Label(rows_frame, text=" Ordinal |", font=("Courier", 16, "bold")).grid(row=0, column=1, padx=8, pady=40)
-    tk.Label(rows_frame, text=" Reduction |", font=("Courier", 16, "bold")).grid(row=0, column=2, padx=8, pady=40)
-    tk.Label(rows_frame, text=" Rev Ordinal |", font=("Courier", 16, "bold")).grid(row=0, column=3, padx=8, pady=40)
-    tk.Label(rows_frame, text=" Rev Reduction |", font=("Courier", 16, "bold")).grid(row=0, column=4, padx=8, pady=40)
 
 header_created = False
 next_row = 1
 
-text = var.get()
-for char in text:
-    if char.isalpha() or char.isdigit():
-        if char.isdigit():
-            val_ord = val_red = val_revOrd = val_revRed = int(char)
-        elif char in ordinal:
-            val_ord = int(ordinal[char])
-            val_red = int(reduction[char])
-            val_revOrd = int(revOrdinal[char])
-            val_revRed = int(revReduction[char])
-        else:
-            continue  # skip unknown characters
+def create_header():
+    tk.Label(rows_frame, text="| Word |", font=("Courier", 16, "bold")).grid(row=0, column=0, padx=8, pady=10)
+    tk.Label(rows_frame, text=" Ordinal |", font=("Courier", 16, "bold")).grid(row=0, column=1, padx=8, pady=10)
+    tk.Label(rows_frame, text=" Reduction |", font=("Courier", 16, "bold")).grid(row=0, column=2, padx=8, pady=10)
+    tk.Label(rows_frame, text=" Rev Ordinal |", font=("Courier", 16, "bold")).grid(row=0, column=3, padx=8, pady=10)
+    tk.Label(rows_frame, text=" Rev Reduction |", font=("Courier", 16, "bold")).grid(row=0, column=4, padx=8, pady=10)
 
 def on_enter(event):
     global header_created, next_row
 
     word = var.get().strip()
-    if not word:  # do nothing if empty
+    if not word:
         return
 
-    # Create header if it hasn't been created yet
     if not header_created:
         create_header()
         header_created = True
 
-    # Compute cipher totals for the word
-    ord_total = sum(int(ordinal[ch]) for ch in word if ch in ordinal)
-    rev_ord_total = sum(int(revOrdinal[ch]) for ch in word if ch in revOrdinal)
-    red_total = sum(int(reduction[ch]) for ch in word if ch in reduction)
-    rev_red_total = sum(int(revReduction[ch]) for ch in word if ch in revReduction)
+    # Split by spaces so numbers are treated as a whole
+    chunks = word.split()
 
-    # Insert a new row for this word
+    total_ord = total_red = total_revOrd = total_revRed = 0
+
+    for chunk in chunks:
+        if chunk.isdigit():  # full number
+            num = int(chunk)
+            total_ord += num
+            total_red += num
+            total_revOrd += num
+            total_revRed += num
+        else:
+            for char in chunk:
+                if char.isalpha() and char in ordinal:
+                    total_ord += int(ordinal[char])
+                    total_red += int(reduction[char])
+                    total_revOrd += int(revOrdinal[char])
+                    total_revRed += int(revReduction[char])
+                elif char.isdigit():
+                    total_ord += int(char)
+                    total_red += int(char)
+                    total_revOrd += int(char)
+                    total_revRed += int(char)
+
     tk.Label(rows_frame, text=word, font=("Courier", 14)).grid(row=next_row, column=0, padx=8, pady=2)
-    tk.Label(rows_frame, text=str(ord_total), font=("Courier", 14)).grid(row=next_row, column=1, padx=8, pady=2)
-    tk.Label(rows_frame, text=str(red_total), font=("Courier", 14)).grid(row=next_row, column=2, padx=8, pady=2)
-    tk.Label(rows_frame, text=str(rev_ord_total), font=("Courier", 14)).grid(row=next_row, column=3, padx=8, pady=2)
-    tk.Label(rows_frame, text=str(rev_red_total), font=("Courier", 14)).grid(row=next_row, column=4, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_ord), font=("Courier", 14)).grid(row=next_row, column=1, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_red), font=("Courier", 14)).grid(row=next_row, column=2, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_revOrd), font=("Courier", 14)).grid(row=next_row, column=3, padx=8, pady=2)
+    tk.Label(rows_frame, text=str(total_revRed), font=("Courier", 14)).grid(row=next_row, column=4, padx=8, pady=2)
 
-    # Increment the row counter for the next Enter
     next_row += 1
-
-    # Clear the entry
     var.set("")
     entry.focus_set()
-    
-root.bind('<Return>', on_enter)
 
+root.bind('<Return>', on_enter)
 var.trace_add('write', on_change)
 
 root.mainloop()
